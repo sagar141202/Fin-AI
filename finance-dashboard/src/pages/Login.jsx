@@ -1,28 +1,30 @@
-import { useState } from "react"
+import { useForm } from "react-hook-form"
 import { useNavigate, Link } from "react-router-dom"
+import { useState } from "react"
 import { useAuth } from "../store/AuthContext"
 import { loginUser } from "../api/auth"
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [apiError, setApiError] = useState("")
   const [loading, setLoading] = useState(false)
-
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm()
 
+  const onSubmit = async (data) => {
+    setApiError("")
+    setLoading(true)
     try {
-      const data = await loginUser(email, password)
-      login(data.access_token)   // store token in context + localStorage
+      const res = await loginUser(data.email, data.password)
+      login(res.access_token)
       navigate("/dashboard")
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed. Try again.")
+      setApiError(err.response?.data?.detail || "Login failed. Try again.")
     } finally {
       setLoading(false)
     }
@@ -34,29 +36,58 @@ export default function Login() {
         <h1 className="text-2xl font-bold mb-2 text-white">Welcome back</h1>
         <p className="text-gray-400 mb-6 text-sm">Sign in to your finance dashboard</p>
 
-        {error && (
+        {apiError && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">
-            {error}
+            {apiError}
           </div>
         )}
 
         <div className="flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500"
-          />
+
+          {/* Email Field */}
+          <div>
+            <input
+              type="email"
+              placeholder="Email"
+              {...register("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: "Enter a valid email address",
+                },
+              })}
+              className={`w-full bg-gray-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500 ${
+                errors.email ? "border-red-500" : "border-gray-700"
+              }`}
+            />
+            {errors.email && (
+              <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Password Field */}
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              {...register("password", {
+                required: "Password is required",
+                minLength: {
+                  value: 6,
+                  message: "Password must be at least 6 characters",
+                },
+              })}
+              className={`w-full bg-gray-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500 ${
+                errors.password ? "border-red-500" : "border-gray-700"
+              }`}
+            />
+            {errors.password && (
+              <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>
+            )}
+          </div>
+
           <button
-            onClick={handleSubmit}
+            onClick={handleSubmit(onSubmit)}
             disabled={loading}
             className="bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
           >
