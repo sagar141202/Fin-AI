@@ -37,41 +37,41 @@ def get_current_user(
     return user
 
 
-# ─── Summary Cards ────────────────────────────────────────
 @router.get("/summary")
 def get_summary(
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    def base_query(tx_type):
+        q = db.query(func.sum(Transaction.amount)).filter(
+            Transaction.user_id == current_user.id,
+            Transaction.type == tx_type
+        )
+        if date_from: q = q.filter(Transaction.date >= date_from)
+        if date_to: q = q.filter(Transaction.date <= date_to)
+        return q.scalar() or 0
+
+    total_income = base_query("income")
+    total_expense = base_query("expense")
+
     now = datetime.utcnow()
     month_start = now.replace(day=1, hour=0, minute=0, second=0)
 
-    # All time totals
-    total_income = db.query(func.sum(Transaction.amount)).filter(
-        Transaction.user_id == current_user.id,
-        Transaction.type == "income"
-    ).scalar() or 0
+    def monthly_query(tx_type):
+        return db.query(func.sum(Transaction.amount)).filter(
+            Transaction.user_id == current_user.id,
+            Transaction.type == tx_type,
+            Transaction.date >= month_start
+        ).scalar() or 0
 
-    total_expense = db.query(func.sum(Transaction.amount)).filter(
-        Transaction.user_id == current_user.id,
-        Transaction.type == "expense"
-    ).scalar() or 0
-
-    # This month
-    monthly_income = db.query(func.sum(Transaction.amount)).filter(
-        Transaction.user_id == current_user.id,
-        Transaction.type == "income",
-        Transaction.date >= month_start
-    ).scalar() or 0
-
-    monthly_expense = db.query(func.sum(Transaction.amount)).filter(
-        Transaction.user_id == current_user.id,
-        Transaction.type == "expense",
-        Transaction.date >= month_start
-    ).scalar() or 0
+    monthly_income = monthly_query("income")
+    monthly_expense = monthly_query("expense")
 
     balance = total_income - total_expense
     savings_rate = ((monthly_income - monthly_expense) / monthly_income * 100) if monthly_income > 0 else 0
+
     anomaly_count = db.query(Transaction).filter(
         Transaction.user_id == current_user.id,
         Transaction.is_anomaly == True
@@ -86,9 +86,10 @@ def get_summary(
     }
 
 
-# ─── Monthly income vs expense (last 12 months) ───────────
 @router.get("/monthly")
 def get_monthly(
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -100,19 +101,19 @@ def get_monthly(
         month_num = month_date.month
         year_num = month_date.year
 
-        income = db.query(func.sum(Transaction.amount)).filter(
-            Transaction.user_id == current_user.id,
-            Transaction.type == "income",
-            extract("month", Transaction.date) == month_num,
-            extract("year", Transaction.date) == year_num
-        ).scalar() or 0
+        def month_sum(tx_type):
+            q = db.query(func.sum(Transaction.amount)).filter(
+                Transaction.user_id == current_user.id,
+                Transaction.type == tx_type,
+                extract("month", Transaction.date) == month_num,
+                extract("year", Transaction.date) == year_num
+            )
+            if date_from: q = q.filter(Transaction.date >= date_from)
+            if date_to: q = q.filter(Transaction.date <= date_to)
+            return q.scalar() or 0
 
-        expense = db.query(func.sum(Transaction.amount)).filter(
-            Transaction.user_id == current_user.id,
-            Transaction.type == "expense",
-            extract("month", Transaction.date) == month_num,
-            extract("year", Transaction.date) == year_num
-        ).scalar() or 0
+        income = month_sum("income")
+        expense = month_sum("expense")
 
         months.append({
             "month": month_date.strftime("%b %Y"),
@@ -124,28 +125,34 @@ def get_monthly(
     return months
 
 
-# ─── Category breakdown ───────────────────────────────────
 @router.get("/categories")
 def get_categories(
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    results = db.query(
+    q = db.query(
         Transaction.category,
         func.sum(Transaction.amount).label("total")
     ).filter(
         Transaction.user_id == current_user.id,
         Transaction.type == "expense"
-    ).group_by(Transaction.category).order_by(
+    )
+    if date_from: q = q.filter(Transaction.date >= date_from)
+    if date_to: q = q.filter(Transaction.date <= date_to)
+
+    results = q.group_by(Transaction.category).order_by(
         func.sum(Transaction.amount).desc()
     ).all()
 
     return [{"category": r.category, "total": round(r.total, 2)} for r in results]
 
 
-# ─── Balance over time ────────────────────────────────────
 @router.get("/balance-timeline")
 def get_balance_timeline(
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -158,20 +165,19 @@ def get_balance_timeline(
         month_num = month_date.month
         year_num = month_date.year
 
-        income = db.query(func.sum(Transaction.amount)).filter(
-            Transaction.user_id == current_user.id,
-            Transaction.type == "income",
-            extract("month", Transaction.date) == month_num,
-            extract("year", Transaction.date) == year_num
-        ).scalar() or 0
+        def month_sum(tx_type):
+            q = db.query(func.sum(Transaction.amount)).filter(
+                Transaction.user_id == current_user.id,
+                Transaction.type == tx_type,
+                extract("month", Transaction.date) == month_num,
+                extract("year", Transaction.date) == year_num
+            )
+            if date_from: q = q.filter(Transaction.date >= date_from)
+            if date_to: q = q.filter(Transaction.date <= date_to)
+            return q.scalar() or 0
 
-        expense = db.query(func.sum(Transaction.amount)).filter(
-            Transaction.user_id == current_user.id,
-            Transaction.type == "expense",
-            extract("month", Transaction.date) == month_num,
-            extract("year", Transaction.date) == year_num
-        ).scalar() or 0
-
+        income = month_sum("income")
+        expense = month_sum("expense")
         running_balance += income - expense
 
         months.append({
