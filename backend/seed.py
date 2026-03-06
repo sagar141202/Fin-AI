@@ -173,7 +173,6 @@ def seed():
 
 if __name__ == "__main__":
     seed()
-EOFcat > backend/seed.py << 'EOF'
 import random
 from datetime import datetime, timedelta
 from database import SessionLocal, engine, Base
