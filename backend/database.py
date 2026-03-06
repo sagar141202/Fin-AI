@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 import os
 
@@ -8,16 +7,14 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Engine = the actual connection to PostgreSQL
+# Render uses postgres:// but SQLAlchemy needs postgresql://
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 engine = create_engine(DATABASE_URL)
-
-# SessionLocal = a factory that creates DB sessions per request
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base = parent class all your table models will inherit from
 Base = declarative_base()
 
-# Dependency — gives each API request its own DB session, then closes it
 def get_db():
     db = SessionLocal()
     try:
