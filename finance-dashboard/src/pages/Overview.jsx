@@ -4,7 +4,8 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts"
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, AlertTriangle, Calendar } from "lucide-react"
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, AlertTriangle, Calendar, Brain, ArrowUp, ArrowDown, Minus } from "lucide-react"
+import { getPredictedSpending, getSpendingTrend } from "../api/ai"
 
 const COLORS = ["#0ea5e9","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899","#14b8a6","#f97316"]
 
@@ -60,6 +61,8 @@ export default function Overview() {
   const [categories, setCategories] = useState([])
   const [timeline, setTimeline] = useState([])
   const [loading, setLoading] = useState(true)
+  const [aiPrediction, setAiPrediction] = useState(null)
+  const [spendingTrend, setSpendingTrend] = useState([])
 
   // Date range state
   const [activePreset, setActivePreset] = useState("Last 12 months")
@@ -102,6 +105,13 @@ export default function Overview() {
           getCategories(params), getBalanceTimeline(params)
         ])
         setSummary(s); setMonthly(m); setCategories(c); setTimeline(t)
+        try {
+          const [pred, trend] = await Promise.all([getPredictedSpending(), getSpendingTrend()])
+          setAiPrediction(pred)
+          setSpendingTrend(trend)
+        } catch (aiErr) {
+          console.error("AI fetch error:", aiErr)
+        }
       } catch (err) {
         console.error("Analytics fetch error:", err)
       } finally {
@@ -293,6 +303,74 @@ export default function Overview() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+
+      {/* AI Forecast Section */}
+      {aiPrediction && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Brain size={20} className="text-sky-400" />
+            <h2 className="text-white font-semibold text-lg">AI Spending Forecast</h2>
+            <span className="bg-sky-500/20 text-sky-400 text-xs px-2 py-0.5 rounded-full">Next Month</span>
+          </div>
+
+          <div className="bg-gradient-to-r from-sky-500/10 to-purple-500/10 border border-sky-500/30 rounded-2xl p-6">
+            <p className="text-gray-400 text-sm">Predicted Total Spend Next Month</p>
+            <p className="text-3xl font-bold text-white mt-1">
+              ₹{aiPrediction.total_predicted_spend.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-gray-500 text-xs mt-2">Based on {aiPrediction.trained_on} · {aiPrediction.model}</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {aiPrediction.top_categories.map((cat, i) => (
+              <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-300 text-sm font-medium">{cat.category}</span>
+                  <span className={`flex items-center gap-1 text-xs ${
+                    cat.trend === "increasing" ? "text-red-400" :
+                    cat.trend === "decreasing" ? "text-emerald-400" : "text-gray-400"
+                  }`}>
+                    {cat.trend === "increasing" ? <ArrowUp size={12} /> :
+                     cat.trend === "decreasing" ? <ArrowDown size={12} /> :
+                     <Minus size={12} />}
+                    {cat.trend}
+                  </span>
+                </div>
+                <p className="text-white font-bold text-xl">
+                  ₹{cat.predicted.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+            <h3 className="text-white font-semibold mb-1">Spending Trend + Forecast</h3>
+            <p className="text-gray-500 text-xs mb-4">Actual spending history + AI predicted next month</p>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={spendingTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                <XAxis dataKey="month" tick={{ fill: "#6b7280", fontSize: 11 }} tickFormatter={v => v.split(" ")[0]} />
+                <YAxis tick={{ fill: "#6b7280", fontSize: 11 }} tickFormatter={v => `₹${(v/1000).toFixed(1)}k`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: "12px", color: "#9ca3af" }} />
+                <Line type="monotone" dataKey="actual" name="Actual Spend"
+                  stroke="#ef4444" strokeWidth={2.5}
+                  dot={{ fill: "#ef4444", r: 4 }} connectNulls={false} />
+                <Line type="monotone" dataKey="predicted" name="AI Forecast"
+                  stroke="#0ea5e9" strokeWidth={2.5} strokeDasharray="6 3"
+                  dot={{ fill: "#0ea5e9", r: 5 }} connectNulls={false} />
+                <Line type="monotone" dataKey="upper" name="Upper Bound"
+                  stroke="#0ea5e9" strokeWidth={1} strokeDasharray="3 3"
+                  dot={false} connectNulls={false} strokeOpacity={0.4} />
+                <Line type="monotone" dataKey="lower" name="Lower Bound"
+                  stroke="#0ea5e9" strokeWidth={1} strokeDasharray="3 3"
+                  dot={false} connectNulls={false} strokeOpacity={0.4} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
     </div>
   )
