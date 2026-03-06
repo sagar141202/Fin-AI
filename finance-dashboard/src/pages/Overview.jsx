@@ -360,6 +360,12 @@ export default function Overview() {
                 <Line type="monotone" dataKey="predicted" name="AI Forecast"
                   stroke="#0ea5e9" strokeWidth={2.5} strokeDasharray="6 3"
                   dot={{ fill: "#0ea5e9", r: 5 }} connectNulls={false} />
+                <Line type="monotone" dataKey="upper" name="Upper Bound"
+                  stroke="#0ea5e9" strokeWidth={1} strokeDasharray="3 3"
+                  dot={false} connectNulls={false} strokeOpacity={0.4} />
+                <Line type="monotone" dataKey="lower" name="Lower Bound"
+                  stroke="#0ea5e9" strokeWidth={1} strokeDasharray="3 3"
+                  dot={false} connectNulls={false} strokeOpacity={0.4} />
               </LineChart>
             </ResponsiveContainer>
           </div>
