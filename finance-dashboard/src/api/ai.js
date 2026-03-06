@@ -25,3 +25,8 @@ export const getAnomalies = async () => {
   const res = await axios.get(`${API_BASE}/ai/detect-anomalies`, { headers: getAuthHeader() })
   return res.data
 }
+
+export const getBudgetInsights = async () => {
+  const res = await axios.get(`${API_BASE}/ai/budget-insights`, { headers: getAuthHeader() })
+  return res.data
+}

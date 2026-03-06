@@ -13,6 +13,7 @@ from database import get_db
 from models import User, Transaction
 from ml.spending_predictor import train_and_predict
 from ml.anomaly_detector import train_model, score_transaction, get_anomaly_explanation
+from ml.budget_analyzer import analyze_budget
 
 load_dotenv()
 
@@ -194,3 +195,15 @@ def score_single(
     result = score_transaction(db, current_user.id, tx)
     result["explanation"] = get_anomaly_explanation(tx, db, current_user.id)
     return result
+
+# ─── Budget recommendations ───────────────────────────────
+@router.get("/budget-insights")
+def budget_insights(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        result = analyze_budget(db, current_user.id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Budget analysis failed: {str(e)}")

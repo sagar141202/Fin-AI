@@ -3,8 +3,9 @@ import { useAuth } from "../store/AuthContext"
 import { useNavigate } from "react-router-dom"
 import Transactions from "./Transactions"
 import Anomalies from "./Anomalies"
+import BudgetInsights from "./BudgetInsights"
 import Overview from "./Overview"
-import { LogOut, LayoutDashboard, ArrowLeftRight, AlertTriangle } from "lucide-react"
+import { LogOut, LayoutDashboard, ArrowLeftRight, AlertTriangle, Lightbulb } from "lucide-react"
 
 export default function Dashboard() {
   const { logout } = useAuth()
@@ -62,6 +63,18 @@ export default function Dashboard() {
             <AlertTriangle size={18} />
             Anomalies
           </button>
+
+          <button
+            onClick={() => setActivePage("budget")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+              activePage === "budget"
+                ? "bg-yellow-500/20 text-yellow-400"
+                : "text-gray-400 hover:bg-gray-800 hover:text-white"
+            }`}
+          >
+            <Lightbulb size={18} />
+            Budget AI
+          </button>
         </nav>
 
         <div className="p-4 border-t border-gray-800">
@@ -80,6 +93,7 @@ export default function Dashboard() {
         {activePage === "overview" && <Overview />}
         {activePage === "transactions" && <Transactions />}
         {activePage === "anomalies" && <Anomalies />}
+        {activePage === "budget" && <BudgetInsights />}
       </div>
     </div>
   )
