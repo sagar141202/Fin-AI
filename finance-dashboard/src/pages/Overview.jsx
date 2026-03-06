@@ -178,7 +178,7 @@ export default function Overview() {
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
                   <span className="text-gray-400 text-xs truncate">{cat.category}</span>
-                  <span className="text-gray-300 text-xs ml-auto font-medium">£{cat.total.toLocaleString()}</span>
+                  <span className="text-gray-300 text-xs ml-auto font-medium">₹{cat.total.toLocaleString("en-IN")}</span>
                 </div>
               ))}
             </div>
