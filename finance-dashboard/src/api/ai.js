@@ -30,3 +30,8 @@ export const getBudgetInsights = async () => {
   const res = await axios.get(`${API_BASE}/ai/budget-insights`, { headers: getAuthHeader() })
   return res.data
 }
+
+export const getLLMAdvice = async () => {
+  const res = await axios.get(`${API_BASE}/ai/llm-advice`, { headers: getAuthHeader() })
+  return res.data
+}

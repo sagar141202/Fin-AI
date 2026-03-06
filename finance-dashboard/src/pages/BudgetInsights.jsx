@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { getBudgetInsights } from "../api/ai"
+import { getBudgetInsights, getLLMAdvice } from "../api/ai"
 import { Lightbulb, TrendingUp, TrendingDown, Target } from "lucide-react"
 
 const INSIGHT_STYLES = {
@@ -12,6 +12,8 @@ const INSIGHT_STYLES = {
 export default function BudgetInsights() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [advice, setAdvice] = useState(null)
+  const [adviceLoading, setAdviceLoading] = useState(false)
 
   useEffect(() => {
     getBudgetInsights()
@@ -19,6 +21,19 @@ export default function BudgetInsights() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
+
+  const fetchAdvice = async () => {
+    setAdviceLoading(true)
+    try {
+      const result = await getLLMAdvice()
+      setAdvice(result.advice)
+    } catch (err) {
+      console.error("LLM advice failed", err)
+      setAdvice("⚠️ " + (err.response?.data?.detail || "Unable to generate advice. Please check your API credits at console.anthropic.com"))
+    } finally {
+      setAdviceLoading(false)
+    }
+  }
 
   if (loading) return (
     <div className="flex items-center justify-center h-full text-gray-400 p-12">
@@ -174,6 +189,45 @@ export default function BudgetInsights() {
           </div>
         </div>
       )}
+
+      {/* Claude AI Advice */}
+      <div className="bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/30 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-white font-semibold flex items-center gap-2">
+              🤖 Claude AI Personal Advisor
+            </h2>
+            <p className="text-gray-500 text-xs mt-0.5">Powered by Anthropic Claude</p>
+          </div>
+          <button
+            onClick={fetchAdvice}
+            disabled={adviceLoading}
+            className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            {adviceLoading ? "Thinking..." : advice ? "Refresh Advice" : "Get AI Advice"}
+          </button>
+        </div>
+
+        {!advice && !adviceLoading && (
+          <p className="text-gray-500 text-sm">
+            Click "Get AI Advice" to receive personalised financial advice from Claude based on your spending patterns.
+          </p>
+        )}
+
+        {adviceLoading && (
+          <div className="flex items-center gap-3 text-gray-400 text-sm">
+            <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+            Claude is analysing your finances...
+          </div>
+        )}
+
+        {advice && (
+          <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+            {advice}
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
