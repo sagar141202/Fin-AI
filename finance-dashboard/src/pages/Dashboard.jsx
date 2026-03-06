@@ -2,13 +2,13 @@ import { useState } from "react"
 import { useAuth } from "../store/AuthContext"
 import { useNavigate } from "react-router-dom"
 import Transactions from "./Transactions"
+import Overview from "./Overview"
 import { LogOut, LayoutDashboard, ArrowLeftRight } from "lucide-react"
 
 export default function Dashboard() {
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const [activePage, setActivePage] = useState("transactions")
-  const [showAddModal, setShowAddModal] = useState(false)
+  const [activePage, setActivePage] = useState("overview")
 
   const handleLogout = () => {
     logout()
@@ -19,7 +19,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-950 flex">
 
       {/* Sidebar */}
-      <div className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
+      <div className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0">
         <div className="p-6 border-b border-gray-800">
           <h1 className="text-xl font-bold text-white">💰 Fin-AI</h1>
           <p className="text-gray-500 text-xs mt-1">Finance Dashboard</p>
@@ -64,14 +64,8 @@ export default function Dashboard() {
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        {activePage === "overview" && (
-          <div className="p-6 text-white">
-            <h2 className="text-2xl font-bold">Overview — coming next! 📊</h2>
-          </div>
-        )}
-        {activePage === "transactions" && (
-          <Transactions onAddClick={() => setShowAddModal(true)} />
-        )}
+        {activePage === "overview" && <Overview />}
+        {activePage === "transactions" && <Transactions />}
       </div>
     </div>
   )
