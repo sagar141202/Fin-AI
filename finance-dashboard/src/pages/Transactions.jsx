@@ -78,8 +78,8 @@ export default function Transactions({ onAddClick }) {
     day: "2-digit", month: "short", year: "numeric"
   })
 
-  const formatAmount = (amount, type) =>
-    `${type === "income" ? "+" : "-"}£${amount.toFixed(2)}`
+ const formatAmount = (amount, type) =>
+  `${type === "income" ? "+" : "-"}₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

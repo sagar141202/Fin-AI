@@ -92,7 +92,7 @@ export default function AddTransactionModal({ onClose, onSuccess }) {
 
           {/* Amount */}
           <div>
-            <label className="text-gray-400 text-sm mb-1 block">Amount (£)</label>
+            <label className="text-gray-400 text-sm mb-1 block">Amount (₹)</label>
             <input
               type="number"
               step="0.01"
