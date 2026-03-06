@@ -15,3 +15,13 @@ export const getSpendingTrend = async () => {
   const res = await axios.get(`${API_BASE}/ai/spending-trend`, { headers: getAuthHeader() })
   return res.data
 }
+
+export const trainAnomalyModel = async () => {
+  const res = await axios.post(`${API_BASE}/ai/train-anomaly-model`, {}, { headers: getAuthHeader() })
+  return res.data
+}
+
+export const getAnomalies = async () => {
+  const res = await axios.get(`${API_BASE}/ai/detect-anomalies`, { headers: getAuthHeader() })
+  return res.data
+}

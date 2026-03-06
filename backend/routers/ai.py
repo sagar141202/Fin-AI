@@ -12,6 +12,7 @@ import os
 from database import get_db
 from models import User, Transaction
 from ml.spending_predictor import train_and_predict
+from ml.anomaly_detector import train_model, score_transaction, get_anomaly_explanation
 
 load_dotenv()
 
@@ -38,6 +39,7 @@ def get_current_user(
     return user
 
 
+# ─── Spending prediction ──────────────────────────────────
 @router.get("/predict-spending")
 def predict_spending(
     current_user: User = Depends(get_current_user),
@@ -52,13 +54,11 @@ def predict_spending(
             v["predicted"] if isinstance(v, dict) else v
             for v in predictions.values()
         )
-
         sorted_cats = sorted(
             predictions.items(),
             key=lambda x: x[1]["predicted"] if isinstance(x[1], dict) else x[1],
             reverse=True
         )
-
         return {
             "total_predicted_spend": round(total_predicted, 2),
             "categories": predictions,
@@ -79,6 +79,7 @@ def predict_spending(
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 
+# ─── Spending trend ───────────────────────────────────────
 @router.get("/spending-trend")
 def spending_trend(
     current_user: User = Depends(get_current_user),
@@ -90,7 +91,6 @@ def spending_trend(
 
         for i in range(11, -1, -1):
             month_date = now - timedelta(days=30 * i)
-
             total = db.query(func.sum(Transaction.amount)).filter(
                 Transaction.user_id == current_user.id,
                 Transaction.type == "expense",
@@ -104,10 +104,8 @@ def spending_trend(
                 "predicted": None
             })
 
-        # Predict next month
         X = np.array(range(12)).reshape(-1, 1)
         y = np.array([m["actual"] for m in monthly_totals])
-
         model = LinearRegression()
         model.fit(X, y)
         next_pred = float(model.predict([[12]])[0])
@@ -123,6 +121,76 @@ def spending_trend(
         })
 
         return monthly_totals
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Trend failed: {str(e)}")
+
+
+# ─── Train anomaly detection model ───────────────────────
+@router.post("/train-anomaly-model")
+def train_anomaly_model(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        result = train_model(db, current_user.id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+
+
+# ─── Get all flagged anomalies ────────────────────────────
+@router.get("/detect-anomalies")
+def detect_anomalies(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        # Auto-train if needed
+        from ml.anomaly_detector import MODELS_DIR
+        model_path = os.path.join(MODELS_DIR, f"user_{current_user.id}_anomaly.pkl")
+        if not os.path.exists(model_path):
+            train_model(db, current_user.id)
+
+        anomalies = db.query(Transaction).filter(
+            Transaction.user_id == current_user.id,
+            Transaction.is_anomaly == True
+        ).order_by(Transaction.amount.desc()).all()
+
+        result = []
+        for tx in anomalies:
+            explanation = get_anomaly_explanation(tx, db, current_user.id)
+            result.append({
+                "id": tx.id,
+                "amount": tx.amount,
+                "category": tx.category,
+                "merchant": tx.merchant,
+                "date": tx.date.isoformat(),
+                "type": tx.type,
+                "explanation": explanation
+            })
+
+        return {
+            "total_anomalies": len(result),
+            "anomalies": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Detection failed: {str(e)}")
+
+
+# ─── Score a single transaction ───────────────────────────
+@router.get("/score-transaction/{transaction_id}")
+def score_single(
+    transaction_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    tx = db.query(Transaction).filter(
+        Transaction.id == transaction_id,
+        Transaction.user_id == current_user.id
+    ).first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    result = score_transaction(db, current_user.id, tx)
+    result["explanation"] = get_anomaly_explanation(tx, db, current_user.id)
+    return result
