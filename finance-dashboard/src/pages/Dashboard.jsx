@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useAuth } from "../store/AuthContext"
+import { useAuth } from "../hooks/useAuth"
 import { useNavigate } from "react-router-dom"
 import Transactions from "./Transactions"
 import Anomalies from "./Anomalies"

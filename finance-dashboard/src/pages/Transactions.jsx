@@ -5,7 +5,7 @@ import AddTransactionModal from "../components/ui/AddTransactionModal"
 
 const CATEGORIES = ["Food", "Transport", "Housing", "Entertainment", "Shopping", "Health", "Education", "Utilities", "Salary", "Freelance", "Investment", "Other"]
 
-export default function Transactions({ onAddClick }) {
+export default function Transactions() {
   const [transactions, setTransactions] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)

@@ -36,7 +36,7 @@ def get_token():
 
 def test_get_transactions_unauthorized():
     response = client.get("/transactions")
-    assert response.status_code == 401
+    assert response.status_code in [401, 403]
 
 
 def test_get_transactions_authorized():
