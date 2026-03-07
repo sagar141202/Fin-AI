@@ -20,7 +20,7 @@ const PRESETS = [
   { label: "All time", days: null },
 ]
 
-function SummaryCard({ title, value, subtitle, icon: Icon, color, prefix = "₹" }) {
+function SummaryCard({ title, value, subtitle, icon: IconComponent, color, prefix = "₹" }) { // eslint-disable-line
   return (
     <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
       <div className="flex items-start justify-between">
@@ -34,7 +34,7 @@ function SummaryCard({ title, value, subtitle, icon: Icon, color, prefix = "₹"
           {subtitle && <p className="text-gray-500 text-xs mt-1">{subtitle}</p>}
         </div>
         <div className="p-3 rounded-xl bg-gray-800">
-          <Icon size={20} className={color} />
+          <IconComponent size={20} className={color} />
         </div>
       </div>
     </div>
