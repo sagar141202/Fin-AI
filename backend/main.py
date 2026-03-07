@@ -12,7 +12,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://finai-frontend.vercel.app",
+        "https://finai-frontend-xi.vercel.app",
         os.getenv("FRONTEND_URL", ""),
     ],
 
