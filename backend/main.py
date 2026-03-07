@@ -10,7 +10,11 @@ app = FastAPI(title="Fin-AI Backend", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://finai-frontend.onrender.com", os.getenv("FRONTEND_URL", "")],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://finai-frontend.vercel.app",
+        os.getenv("FRONTEND_URL", ""),
+    ],
 
     allow_credentials=True,
     allow_methods=["*"],
