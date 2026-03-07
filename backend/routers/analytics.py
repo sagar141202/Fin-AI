@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from typing import Optional
 from datetime import datetime, timedelta
-import jwt as pyjwt
-from jwt.exceptions import InvalidTokenError as JWTError
+from jose import jwt, JWTError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import HTTPException
 from dotenv import load_dotenv
@@ -30,7 +29,7 @@ def get_current_user(
 ):
     token = credentials.credentials
     try:
-        payload = pyjwt.decode(token, get_secret(), algorithms=[get_algorithm()])
+        payload = jwt.decode(token, get_secret(), algorithms=[get_algorithm()])
         user_id = int(payload.get("sub"))
     except (JWTError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid token")
