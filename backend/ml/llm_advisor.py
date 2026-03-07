@@ -1,52 +1,51 @@
-import anthropic
+from groq import Groq
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+def get_llm_advice(budget_data: dict) -> str:
+    try:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return "AI advice unavailable — GROQ_API_KEY not configured."
 
+        client = Groq(api_key=api_key)
 
-def generate_budget_advice(budget_data: dict) -> str:
-    rule = budget_data.get("rule_5030_20", {})
-    insights = budget_data.get("insights", [])
-    progress = budget_data.get("budget_progress", [])
+        insights = budget_data.get("insights", [])
+        needs_pct = budget_data.get("needs_pct", 0)
+        wants_pct = budget_data.get("wants_pct", 0)
+        savings_pct = budget_data.get("savings_pct", 0)
+        monthly_income = budget_data.get("monthly_income", 0)
+        monthly_expense = budget_data.get("monthly_expense", 0)
+        top_categories = budget_data.get("top_categories", [])
 
-    over_budget_cats = [p["category"] for p in progress if p["over_budget"]]
-    top_3_spend = progress[:3]
+        top_cats_text = ", ".join(
+            [f"{c['category']} (₹{c['total']:.0f})" for c in top_categories[:5]]
+        ) if top_categories else "N/A"
 
-    prompt = f"""You are a friendly personal finance advisor at a bank.
-Analyse this user's monthly financial data and give them 3-4 specific, actionable pieces of advice.
+        prompt = f"""You are a personal finance advisor for an Indian user.
+Analyze their financial data and provide concise, actionable advice in 3-4 sentences.
+Be specific, encouraging, and practical. Use Indian financial context (₹, SIP, PPF, etc).
 
 Financial Summary:
-- Monthly Income: Rs.{budget_data.get('income', 0):,.0f}
-- Total Spent: Rs.{budget_data.get('total_spend', 0):,.0f}
-- Savings: Rs.{budget_data.get('savings', 0):,.0f}
+- Monthly Income: ₹{monthly_income:,.0f}
+- Monthly Expenses: ₹{monthly_expense:,.0f}
+- Needs spending: {needs_pct:.1f}% (target: 50%)
+- Wants spending: {wants_pct:.1f}% (target: 30%)
+- Savings rate: {savings_pct:.1f}% (target: 20%)
+- Top spending categories: {top_cats_text}
+- Key insights: {'; '.join(insights[:3]) if insights else 'None'}
 
-50/30/20 Rule Status:
-- Needs: {rule.get('needs', {}).get('actual', 0)}% (target: 50%) — {rule.get('needs', {}).get('status', 'unknown')}
-- Wants: {rule.get('wants', {}).get('actual', 0)}% (target: 30%) — {rule.get('wants', {}).get('status', 'unknown')}
-- Savings: {rule.get('savings', {}).get('actual', 0)}% (target: 20%) — {rule.get('savings', {}).get('status', 'unknown')}
+Provide specific, actionable advice to improve their financial health."""
 
-Top 3 Spending Categories:
-{chr(10).join([f"- {p['category']}: Rs.{p['spent']:,.0f} (budget: Rs.{p['budget']:,.0f})" for p in top_3_spend])}
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300,
+            temperature=0.7
+        )
+        return response.choices[0].message.content
 
-Over-budget categories: {', '.join(over_budget_cats) if over_budget_cats else 'None'}
-
-AI-detected issues:
-{chr(10).join([f"- {i['title']}: {i['message']}" for i in insights[:3]])}
-
-Give personalised, conversational advice in 3-4 short paragraphs.
-Use Rs. for currency. Be specific with numbers. Be encouraging but honest.
-Do NOT use bullet points — write in natural paragraphs like a real advisor talking to a client.
-Keep it under 200 words."""
-
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=400,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
-
-    return message.content[0].text
+    except Exception as e:
+        return f"AI advice temporarily unavailable. Please try again later. ({str(e)[:100]})"
