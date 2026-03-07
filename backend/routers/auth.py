@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from jose import jwt
+import jwt as pyjwt
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
@@ -36,7 +36,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 def create_token(data: dict) -> str:
     payload = data.copy()
     payload["exp"] = datetime.utcnow() + timedelta(minutes=get_expire())
-    return jwt.encode(payload, get_secret(), algorithm=get_algorithm())
+    return pyjwt.encode(payload, get_secret(), algorithm=get_algorithm())
 
 
 @router.post("/register", response_model=UserResponse)
