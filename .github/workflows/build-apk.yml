@@ -1,0 +1,67 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install frontend dependencies
+        run: |
+          cd finance-dashboard
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd finance-dashboard
+          echo "VITE_API_URL=https://finai-backend-omega.vercel.app" > .env.production
+          npm run build
+
+      - name: Install Capacitor
+        run: |
+          cd finance-dashboard
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Sync Capacitor
+        run: |
+          cd finance-dashboard
+          npx cap sync android
+
+      - name: Make gradlew executable
+        run: |
+          cd finance-dashboard/android
+          chmod +x gradlew
+
+      - name: Build Debug APK
+        run: |
+          cd finance-dashboard/android
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fin-ai-debug-apk
+          path: finance-dashboard/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30

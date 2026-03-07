@@ -18,3 +18,11 @@ finance-dashboard/dist/
 # IDE
 .vscode/
 .idea/
+
+# Capacitor Android - keep gradle but ignore build outputs
+finance-dashboard/android/.gradle
+finance-dashboard/android/app/build
+finance-dashboard/android/build
+!finance-dashboard/android/gradlew
+!finance-dashboard/android/gradlew.bat
+!finance-dashboard/android/gradle
