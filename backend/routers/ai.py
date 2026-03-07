@@ -14,7 +14,7 @@ from models import User, Transaction
 from ml.spending_predictor import train_and_predict
 from ml.anomaly_detector import train_model, score_transaction, get_anomaly_explanation
 from ml.budget_analyzer import analyze_budget
-from ml.llm_advisor import generate_budget_advice
+from ml.llm_advisor import get_llm_advice
 
 load_dotenv()
 
@@ -219,7 +219,7 @@ def llm_advice(
 ):
     try:
         budget_data = analyze_budget(db, current_user.id)
-        advice = generate_budget_advice(budget_data)
+        advice = get_llm_advice(budget_data)
         return {"advice": advice}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM advice failed: {str(e)}")
