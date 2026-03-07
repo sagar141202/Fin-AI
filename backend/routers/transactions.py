@@ -17,8 +17,11 @@ load_dotenv()
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 security = HTTPBearer()
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+def get_secret():
+    return os.getenv("SECRET_KEY", "finai-super-secret-2026")
+
+def get_algorithm():
+    return os.getenv("ALGORITHM", "HS256")
 
 
 # ─── Helper: get current user from JWT token ─────────────
@@ -28,7 +31,7 @@ def get_current_user(
 ):
     token = credentials.credentials
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, get_secret(), algorithms=[get_algorithm()])
         user_id = int(payload.get("sub"))
     except (JWTError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid token")

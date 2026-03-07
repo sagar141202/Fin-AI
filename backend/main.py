@@ -4,9 +4,15 @@ from database import engine, Base
 import os
 from routers import auth, transactions, analytics, ai
 
-Base.metadata.create_all(bind=engine)
+import contextlib
+@contextlib.asynccontextmanager
+async def lifespan(app):
+    with contextlib.suppress(Exception):
+        Base.metadata.create_all(bind=engine)
+    yield
 
-app = FastAPI(title="Fin-AI Backend", version="1.0.0")
+
+app = FastAPI(title="Fin-AI Backend", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

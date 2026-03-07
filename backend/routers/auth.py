@@ -17,9 +17,14 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+def get_secret():
+    return os.getenv("SECRET_KEY", "finai-super-secret-2026")
+
+def get_algorithm():
+    return os.getenv("ALGORITHM", "HS256")
+
+def get_expire():
+    return int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
 
 def hash_password(password: str) -> str:
@@ -30,8 +35,8 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_token(data: dict) -> str:
     payload = data.copy()
-    payload["exp"] = datetime.utcnow() + timedelta(minutes=EXPIRE_MINUTES)
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    payload["exp"] = datetime.utcnow() + timedelta(minutes=get_expire())
+    return jwt.encode(payload, get_secret(), algorithm=get_algorithm())
 
 
 @router.post("/register", response_model=UserResponse)
