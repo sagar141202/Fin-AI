@@ -12,17 +12,24 @@ def get_llm_advice(budget_data: dict) -> str:
 
         client = Groq(api_key=api_key)
 
-        insights = budget_data.get("insights", [])
-        needs_pct = budget_data.get("needs_pct", 0)
-        wants_pct = budget_data.get("wants_pct", 0)
-        savings_pct = budget_data.get("savings_pct", 0)
-        monthly_income = budget_data.get("monthly_income", 0)
-        monthly_expense = budget_data.get("monthly_expense", 0)
-        top_categories = budget_data.get("top_categories", [])
+        # Extract insights messages from dict objects
+        raw_insights = budget_data.get("insights", [])
+        insight_messages = []
+        for i in raw_insights:
+            if isinstance(i, dict):
+                insight_messages.append(i.get("message", ""))
+            elif isinstance(i, str):
+                insight_messages.append(i)
 
-        top_cats_text = ", ".join(
-            [f"{c['category']} (₹{c['total']:.0f})" for c in top_categories[:5]]
-        ) if top_categories else "N/A"
+        monthly_income = budget_data.get("income", 0)
+        monthly_expense = budget_data.get("total_spend", 0)
+        savings_pct = budget_data.get("savings_percent", 0)
+        needs_pct = budget_data.get("needs_percent", 0)
+        wants_pct = budget_data.get("wants_percent", 0)
+
+        budget_progress = budget_data.get("budget_progress", [])
+        over_budget = [b["category"] for b in budget_progress if b.get("over_budget")]
+        top_cats_text = ", ".join(over_budget) if over_budget else "None"
 
         prompt = f"""You are a personal finance advisor for an Indian user.
 Analyze their financial data and provide concise, actionable advice in 3-4 sentences.
@@ -34,8 +41,8 @@ Financial Summary:
 - Needs spending: {needs_pct:.1f}% (target: 50%)
 - Wants spending: {wants_pct:.1f}% (target: 30%)
 - Savings rate: {savings_pct:.1f}% (target: 20%)
-- Top spending categories: {top_cats_text}
-- Key insights: {'; '.join(insights[:3]) if insights else 'None'}
+- Over budget categories: {top_cats_text}
+- Key insights: {'; '.join(insight_messages[:3])}
 
 Provide specific, actionable advice to improve their financial health."""
 
