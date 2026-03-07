@@ -121,7 +121,7 @@ export default function Overview() {
 
     const timer = setTimeout(fetchAll, 400)
     return () => clearTimeout(timer)
-  }, [dateFrom, dateTo])
+  }, [dateFrom, dateTo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (

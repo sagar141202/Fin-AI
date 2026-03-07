@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --ext js,jsx --ignore-pattern 'android/**' --ignore-pattern 'dist/**'",
     "preview": "vite preview"
   },
   "dependencies": {

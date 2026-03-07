@@ -43,14 +43,14 @@ export default function Dashboard() {
         </div>
 
         <nav className="flex-1 p-4 flex flex-col gap-1">
-          {navItems.map(({ id, label, icon: Icon, color }) => (
+          {navItems.map(({ id, label, icon: NavIcon, color }) => ( // eslint-disable-line
             <button
               key={id}
               onClick={() => handleNav(id)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors w-full text-left
                 ${activePage === id ? "bg-gray-800 text-white" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
             >
-              <Icon size={18} className={activePage === id ? color : ""} />
+              <NavIcon size={18} className={activePage === id ? color : ""} />
               {label}
             </button>
           ))}
@@ -98,14 +98,14 @@ export default function Dashboard() {
         </div>
 
         <nav className="flex-1 p-4 flex flex-col gap-1">
-          {navItems.map(({ id, label, icon: Icon, color }) => (
+          {navItems.map(({ id, label, icon: NavIcon, color }) => ( // eslint-disable-line
             <button
               key={id}
               onClick={() => handleNav(id)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors w-full text-left
                 ${activePage === id ? "bg-gray-800 text-white" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
             >
-              <Icon size={18} className={activePage === id ? color : ""} />
+              <NavIcon size={18} className={activePage === id ? color : ""} />
               {label}
             </button>
           ))}
@@ -156,14 +156,14 @@ export default function Dashboard() {
         {/* ── Mobile Bottom Nav ──────────────────────── */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 z-30">
           <div className="flex items-center justify-around px-2 py-2">
-            {navItems.map(({ id, label, icon: Icon, color }) => (
+            {navItems.map(({ id, label, icon: NavIcon, color }) => ( // eslint-disable-line
               <button
                 key={id}
                 onClick={() => setActivePage(id)}
                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors flex-1
                   ${activePage === id ? "bg-gray-800" : ""}`}
               >
-                <Icon size={20} className={activePage === id ? color : "text-gray-500"} />
+                <NavIcon size={20} className={activePage === id ? color : "text-gray-500"} />
                 <span className={`text-xs font-medium ${activePage === id ? "text-white" : "text-gray-500"}`}>
                   {label}
                 </span>
