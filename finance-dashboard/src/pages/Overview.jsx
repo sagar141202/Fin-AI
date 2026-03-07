@@ -20,7 +20,7 @@ const PRESETS = [
   { label: "All time", days: null },
 ]
 
-function SummaryCard({ title, value, subtitle, icon: Icon, color, prefix = "₹" }) {
+function SummaryCard({ title, value, subtitle, icon: Icon, color, prefix = "₹" }) { // eslint-disable-line no-unused-vars
   return (
     <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
       <div className="flex items-start justify-between">
